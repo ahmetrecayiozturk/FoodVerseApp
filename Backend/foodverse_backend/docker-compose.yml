@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  my-node-app:
+    container_name: food-verse-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DB_URI=mongodb+srv://root:Password@mydatabase.bgb3ppk.mongodb.net/MyDatabase?retryWrites=true&w=majority&appName=MyDatabase
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    depends_on:
+      - mongodb
+      - rabbitmq
+
+  mongodb:
+    image: mongo
+    environment:
+      MONGO_INITDB_DATABASE: MyDatabase
+    ports:
+      - "27017:27017"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rabbitmq-consumer
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: node consumer.js
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    depends_on:
+      - rabbitmq
+
+
+
+
+#version: '3'
+#services:
+#  my-node-app:
+#    image: my-node-app
+#    ports:
+#      - "8000:3000"
+#    environment:
+#      - NODE_ENV=production
